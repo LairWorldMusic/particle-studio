@@ -2,7 +2,7 @@
 
 Transform your webcam into stunning visual effects with real-time particle processing.
 
-![Preview](assets/preview.png)
+![Preview](https://lairworldmusic.github.io/particle-studio-website/)
 
 ## Features
 
