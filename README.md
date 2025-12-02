@@ -2,8 +2,7 @@
 
 Transform your webcam into stunning visual effects with real-time particle processing.
 
-![Preview](https://lairworldmusic.github.io/particle-studio-website/)
-
+site https://lairworldmusic.github.io/particle-studio-website/
 ## Features
 
 - **Particle Effects** — Real-time edge detection with particle trails
