@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Particle Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --bg-primary: #030712;
+      --bg-secondary: #0a1628;
+      --bg-card: #0d1a2d;
+      --bg-card-hover: #122236;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --accent-cyan: #06b6d4;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-light: rgba(255, 255, 255, 0.12);
+      --success: #22c55e;
+      --error: #ef4444;
+      --gradient-blue: linear-gradient(135deg, #3b82f6, #06b6d4);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow: hidden;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    
+    body *, body *::before, body *::after {
+      transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    /* Welcome Screen */
+    #welcomeScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    #welcomeScreen::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    #welcomeScreen::after {
+      content: '';
+      position: absolute;
+      top: 200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .welcome-titlebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      display: flex;
+      justify-content: flex-end;
+      -webkit-app-region: drag;
+    }
+    
+    .welcome-titlebar .titlebar-buttons {
+      display: flex;
+      -webkit-app-region: no-drag;
+    }
+    
+    #welcomeScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .welcome-container {
+      text-align: center;
+      max-width: 420px;
+      padding: 40px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .welcome-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background-image: url('./electron/dark-logo.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    body.light-theme .welcome-logo {
+      background-image: url('./electron/light-logo.png');
+    }
+    
+    .welcome-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .welcome-title .gradient-text {
+      background: var(--gradient-blue);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .welcome-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .theme-selector {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    
+    .theme-option {
+      width: 100px;
+      padding: 16px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .theme-option:hover {
+      border-color: var(--accent);
+      background: var(--bg-card-hover);
+    }
+    
+    .theme-option.selected {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .theme-preview {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      margin: 0 auto 10px;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--border);
+    }
+    
+    .theme-preview.dark {
+      background-image: url('./electron/dark.png');
+    }
+    
+    .theme-preview.light {
+      background-image: url('./electron/light.png');
+    }
+    
+    .theme-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .theme-option.selected .theme-name {
+      color: var(--text-primary);
+    }
+    
+    /* Welcome Settings */
+    .welcome-settings {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .welcome-setting {
+      flex: 1;
+      text-align: left;
+    }
+    
+    .welcome-setting-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .welcome-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    
+    .welcome-select:focus {
+      border-color: var(--accent);
+    }
+    
+    .welcome-select option {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-light);
+    }
+    
+    .btn-google {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    
+    .btn-google:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-light);
+    }
+    
+    .btn-skip {
+      background: transparent;
+      color: var(--text-secondary);
+      width: 100%;
+    }
+    
+    .btn-skip:hover {
+      color: var(--text-primary);
+    }
+    
+    .google-icon {
+      width: 18px;
+      height: 18px;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Titlebar */
+    #titlebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: rgba(3, 7, 18, 0.8);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border);
+      opacity: 1;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    #titlebar.hidden {
+      opacity: 0;
+      transform: translateY(-100%);
+      pointer-events: none;
+    }
+    
+    .titlebar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-left: 12px;
+    }
+    
+    .app-icon {
+      width: 18px;
+      height: 18px;
+      background-image: url('./electron/dark-logo.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    body.light-theme .app-icon {
+      background-image: url('./electron/light-logo.png');
+    }
+    
+    .app-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .titlebar-buttons {
+      display: flex;
+      -webkit-app-region: no-drag;
+    }
+    
+    .titlebar-btn {
+      width: 46px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .titlebar-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    
+    .titlebar-close:hover {
+      background: #e81123;
+      color: white;
+    }
+
+    /* Control Panel */
+    #controlPanel {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      border: 1px solid var(--border);
+      z-index: 100;
+      opacity: 1;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    #controlPanel.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px);
+      pointer-events: none;
+    }
+    
+    .control-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: none;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .control-btn:hover {
+      background: var(--accent);
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .control-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .control-divider {
+      width: 1px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    /* Settings Panel */
+    #settingsPanel {
+      display: none;
+      position: fixed;
+      top: 44px;
+      right: 16px;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      z-index: 10000;
+      min-width: 260px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    
+    .settings-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    
+    .settings-group {
+      margin-bottom: 14px;
+    }
+    
+    .settings-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .settings-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+    
+    .settings-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* Profile Panel */
+    #profilePanel {
+      display: none;
+      position: fixed;
+      top: 44px;
+      right: 16px;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      z-index: 10000;
+      min-width: 260px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .profile-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--gradient-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .profile-info h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .profile-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    
+    .profile-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .profile-menu-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    
+    .profile-menu-item.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+    }
+
+    /* Info text */
+    #info {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-align: center;
+    }
+    
+    /* UI Hint */
+    #uiHint {
+      position: fixed;
+      top: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-muted);
+      font-size: 11px;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 50;
+      transition: opacity 0.3s ease;
+    }
+    
+    #uiHint.hidden {
+      opacity: 0;
+    }
+    
+    /* Canvas */
+    canvas { display: block; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    
+    /* Light theme */
+    body.light-theme {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-light: rgba(0, 0, 0, 0.12);
+    }
+
+    /* Sidebar */
+    #sidebar {
+      position: fixed;
+      top: 32px;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    
+    #sidebar.visible {
+      transform: translateX(0);
+    }
+    
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .sidebar-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.15s ease;
+    }
+    
+    .sidebar-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+    
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    /* Profiles in Sidebar */
+    .profile-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    
+    .profile-item:hover {
+      background: var(--bg-card-hover);
+    }
+    
+    .profile-item.active {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .profile-item-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .profile-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    .profile-item-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .profile-item-effects {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    
+    .profile-action-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s ease;
+      opacity: 0;
+    }
+    
+    .profile-item:hover .profile-action-btn {
+      opacity: 1;
+    }
+    
+    .profile-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+    
+    .add-profile-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+    
+    .add-profile-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    /* Effects in Sidebar */
+    .effects-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    
+    .effect-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .effect-card:hover {
+      border-color: var(--accent);
+    }
+    
+    .effect-card.active {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .effect-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+    
+    .effect-name {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .effect-card.active .effect-name {
+      color: var(--text-primary);
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    
+    .sidebar-footer .btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 12px;
+    }
+    
+    .btn-secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    /* Menu Button in Control Panel */
+    .control-btn.menu-btn {
+      background: var(--bg-card);
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Screen -->
+  <div id="welcomeScreen">
+    <div class="welcome-titlebar">
+      <div class="titlebar-buttons">
+        <button class="titlebar-btn" id="welcomeMinBtn">─</button>
+        <button class="titlebar-btn" id="welcomeMaxBtn">☐</button>
+        <button class="titlebar-btn titlebar-close" id="welcomeCloseBtn">✕</button>
+      </div>
+    </div>
+    
+    <div class="welcome-container">
+      <div class="welcome-logo"></div>
+      <h1 class="welcome-title">
+        <span class="gradient-text">Particle</span> Studio
+      </h1>
+      <p class="welcome-subtitle">Transform your webcam into stunning visual effects with real-time particle processing</p>
+      
+      <div class="theme-selector">
+        <div class="theme-option selected" data-theme="dark">
+          <div class="theme-preview dark"></div>
+          <div class="theme-name">Dark</div>
+        </div>
+        <div class="theme-option" data-theme="light">
+          <div class="theme-preview light"></div>
+          <div class="theme-name">Light</div>
+        </div>
+      </div>
+      
+      <div class="welcome-settings">
+        <div class="welcome-setting">
+          <label class="welcome-setting-label">Camera</label>
+          <select class="welcome-select" id="welcomeCameraSelect">
+            <option value="">Loading cameras...</option>
+          </select>
+        </div>
+        <div class="welcome-setting">
+          <label class="welcome-setting-label">Quality</label>
+          <select class="welcome-select" id="welcomeQualitySelect">
+            <option value="1080">High (1080p)</option>
+            <option value="720" selected>Medium (720p)</option>
+            <option value="480">Low (480p)</option>
+          </select>
+        </div>
+      </div>
+      
+      <button id="continueBtn" class="btn btn-primary" style="width: 100%;">
+        Continue
+      </button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="titlebar" style="display: none;">
+    <div class="titlebar-left">
+      <div class="app-icon"></div>
+      <span class="app-name">Particle Studio</span>
+    </div>
+    <div class="titlebar-buttons">
+      <button class="titlebar-btn" id="minBtn">─</button>
+      <button class="titlebar-btn" id="maxBtn">☐</button>
+      <button class="titlebar-btn titlebar-close" id="closeBtn">✕</button>
+    </div>
+  </div>
+  
+  <div id="info"></div>
+  
+  <!-- UI Hint -->
+  <div id="uiHint">Press Z to hide/show controls</div>
+  
+  <!-- Control Panel -->
+  <div id="controlPanel" style="display: none;">
+    <button class="control-btn active" id="ctrl-particles" title="Particles"><i class="ph ph-sparkle"></i></button>
+    <button class="control-btn" id="ctrl-tracking" title="Tracking"><i class="ph ph-scan"></i></button>
+    <button class="control-btn" id="ctrl-audio" title="Audio Visualizer"><i class="ph ph-waveform"></i></button>
+    <div class="control-divider"></div>
+    <button class="control-btn active" id="ctrl-bloom" title="Glow Effect"><i class="ph ph-sun-dim"></i></button>
+    <button class="control-btn active" id="ctrl-camera" title="Toggle Camera"><i class="ph ph-camera"></i></button>
+    <button class="control-btn" id="ctrl-theme" title="Theme"><i class="ph ph-moon"></i></button>
+    <div class="control-divider"></div>
+    <button class="control-btn" id="ctrl-settings" title="Settings"><i class="ph ph-gear"></i></button>
+  </div>
+  
+  <!-- Settings Panel -->
+  <div id="settingsPanel">
+    <div class="settings-title">Settings</div>
+    <div class="settings-group">
+      <label class="settings-label">Camera Source</label>
+      <select class="settings-select" id="cameraSelect"></select>
+    </div>
+    <div class="settings-group">
+      <label class="settings-label">Quality</label>
+      <select class="settings-select" id="qualitySelect">
+        <option value="high">High (1080p)</option>
+        <option value="medium" selected>Medium (720p)</option>
+        <option value="low">Low (480p)</option>
+      </select>
+    </div>
+  </div>
+  
+  <script type="module" src="main.js"></script>
+</body>
+</html>
